@@ -1,57 +1,91 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { Product } from '../types';
+import { useAuth } from './AuthContext';
 
-interface AppState {
+interface UserData {
     favorites: string[];
     viewHistory: string[];
-    user: {
-        id: string;
-        name: string;
-        email: string;
-    };
+}
+
+interface AppState {
+    userData: { [userId: string]: UserData };
+    currentUserId: string | null;
 }
 
 type AppAction =
+    | { type: 'SET_CURRENT_USER'; payload: string | null }
     | { type: 'ADD_FAVORITE'; payload: string }
     | { type: 'REMOVE_FAVORITE'; payload: string }
     | { type: 'ADD_TO_HISTORY'; payload: string }
     | { type: 'CLEAR_HISTORY' };
 
 const initialState: AppState = {
-    favorites: ['1', '3', '5'], // Mock favorites
-    viewHistory: ['1', '2', '4', '6'], // Mock view history
-    user: {
-        id: 'user1',
-        name: 'Nguyễn Văn Test',
-        email: 'test@example.com',
-    },
+    userData: {},
+    currentUserId: null,
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
     switch (action.type) {
-        case 'ADD_FAVORITE':
+        case 'SET_CURRENT_USER':
             return {
                 ...state,
-                favorites: state.favorites.includes(action.payload)
-                    ? state.favorites
-                    : [...state.favorites, action.payload],
+                currentUserId: action.payload,
+            };
+        case 'ADD_FAVORITE':
+            if (!state.currentUserId) return state;
+            const currentUserData = state.userData[state.currentUserId] || { favorites: [], viewHistory: [] };
+            return {
+                ...state,
+                userData: {
+                    ...state.userData,
+                    [state.currentUserId]: {
+                        ...currentUserData,
+                        favorites: currentUserData.favorites.includes(action.payload)
+                            ? currentUserData.favorites
+                            : [...currentUserData.favorites, action.payload],
+                    },
+                },
             };
         case 'REMOVE_FAVORITE':
+            if (!state.currentUserId) return state;
+            const userDataForRemove = state.userData[state.currentUserId] || { favorites: [], viewHistory: [] };
             return {
                 ...state,
-                favorites: state.favorites.filter(id => id !== action.payload),
+                userData: {
+                    ...state.userData,
+                    [state.currentUserId]: {
+                        ...userDataForRemove,
+                        favorites: userDataForRemove.favorites.filter(id => id !== action.payload),
+                    },
+                },
             };
         case 'ADD_TO_HISTORY':
+            if (!state.currentUserId) return state;
+            const userDataForHistory = state.userData[state.currentUserId] || { favorites: [], viewHistory: [] };
             return {
                 ...state,
-                viewHistory: state.viewHistory.includes(action.payload)
-                    ? state.viewHistory
-                    : [action.payload, ...state.viewHistory.slice(0, 9)], // Giữ tối đa 10 items
+                userData: {
+                    ...state.userData,
+                    [state.currentUserId]: {
+                        ...userDataForHistory,
+                        viewHistory: userDataForHistory.viewHistory.includes(action.payload)
+                            ? userDataForHistory.viewHistory
+                            : [action.payload, ...userDataForHistory.viewHistory.slice(0, 9)], // Giữ tối đa 10 items
+                    },
+                },
             };
         case 'CLEAR_HISTORY':
+            if (!state.currentUserId) return state;
+            const userDataForClear = state.userData[state.currentUserId] || { favorites: [], viewHistory: [] };
             return {
                 ...state,
-                viewHistory: [],
+                userData: {
+                    ...state.userData,
+                    [state.currentUserId]: {
+                        ...userDataForClear,
+                        viewHistory: [],
+                    },
+                },
             };
         default:
             return state;
@@ -67,12 +101,44 @@ interface AppContextType {
     isFavorite: (productId: string) => boolean;
     getFavoriteProducts: (products: Product[]) => Product[];
     getHistoryProducts: (products: Product[]) => Product[];
+    getCurrentUserFavorites: () => string[];
+    getCurrentUserHistory: () => string[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [state, dispatch] = useReducer(appReducer, initialState);
+    // Load data từ localStorage
+    const loadInitialState = (): AppState => {
+        try {
+            const savedData = localStorage.getItem('appState');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                return {
+                    userData: parsed.userData || {},
+                    currentUserId: null, // Sẽ được set bởi useEffect
+                };
+            }
+        } catch (error) {
+            console.error('Error loading app state:', error);
+        }
+        return initialState;
+    };
+
+    const [state, dispatch] = useReducer(appReducer, loadInitialState());
+    const { user } = useAuth();
+
+    // Lưu state vào localStorage khi có thay đổi
+    useEffect(() => {
+        localStorage.setItem('appState', JSON.stringify({
+            userData: state.userData,
+        }));
+    }, [state.userData]);
+
+    // Tự động set current user khi user đăng nhập/đăng xuất
+    useEffect(() => {
+        dispatch({ type: 'SET_CURRENT_USER', payload: user?.id || null });
+    }, [user?.id]);
 
     const addFavorite = (productId: string) => {
         dispatch({ type: 'ADD_FAVORITE', payload: productId });
@@ -91,15 +157,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const isFavorite = (productId: string): boolean => {
-        return state.favorites.includes(productId);
+        if (!state.currentUserId) return false;
+        const userData = state.userData[state.currentUserId];
+        return userData ? userData.favorites.includes(productId) : false;
     };
 
     const getFavoriteProducts = (products: Product[]): Product[] => {
-        return products.filter(product => state.favorites.includes(product.id));
+        if (!state.currentUserId) return [];
+        const userData = state.userData[state.currentUserId];
+        const favorites = userData ? userData.favorites : [];
+        return products.filter(product => favorites.includes(product.id));
     };
 
     const getHistoryProducts = (products: Product[]): Product[] => {
-        return products.filter(product => state.viewHistory.includes(product.id));
+        if (!state.currentUserId) return [];
+        const userData = state.userData[state.currentUserId];
+        const viewHistory = userData ? userData.viewHistory : [];
+        return products.filter(product => viewHistory.includes(product.id));
+    };
+
+    const getCurrentUserFavorites = (): string[] => {
+        if (!state.currentUserId) return [];
+        const userData = state.userData[state.currentUserId];
+        return userData ? userData.favorites : [];
+    };
+
+    const getCurrentUserHistory = (): string[] => {
+        if (!state.currentUserId) return [];
+        const userData = state.userData[state.currentUserId];
+        return userData ? userData.viewHistory : [];
     };
 
     const value: AppContextType = {
@@ -111,6 +197,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isFavorite,
         getFavoriteProducts,
         getHistoryProducts,
+        getCurrentUserFavorites,
+        getCurrentUserHistory,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

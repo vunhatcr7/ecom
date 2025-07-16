@@ -18,6 +18,7 @@ import {
 } from '@mui/icons-material';
 import { Product } from '../types';
 import { useApp } from '../utils/AppContext';
+import { useAuth } from '../utils/AuthContext';
 import {
     formatPrice,
     hasDiscount,
@@ -25,6 +26,7 @@ import {
     getLevelColor,
     getCategoryColor,
 } from '../utils/helpers';
+import { toast } from 'react-toastify';
 
 interface ProductCardProps {
     product: Product;
@@ -33,18 +35,31 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetail }) => {
     const { isFavorite, addFavorite, removeFavorite, addToHistory } = useApp();
+    const { isAuthenticated } = useAuth();
 
     const handleFavoriteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // Kiểm tra nếu chưa đăng nhập
+        if (!isAuthenticated) {
+            toast.warning('Bạn cần đăng nhập để thêm sản phẩm vào mục yêu thích!');
+            return;
+        }
+
         if (isFavorite(product.id)) {
             removeFavorite(product.id);
+            toast.info('Đã xóa khỏi yêu thích!');
         } else {
             addFavorite(product.id);
+            toast.success('Đã thêm vào yêu thích!');
         }
     };
 
     const handleViewDetail = () => {
-        addToHistory(product.id);
+        // Chỉ lưu vào history nếu đã đăng nhập
+        if (isAuthenticated) {
+            addToHistory(product.id);
+        }
         onViewDetail(product);
     };
 
@@ -91,7 +106,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetail }) => {
                     },
                 }}
             >
-                {isFavorite(product.id) ? (
+                {!isAuthenticated ? (
+                    <FavoriteBorder sx={{ color: 'text.secondary' }} />
+                ) : isFavorite(product.id) ? (
                     <Favorite color="error" />
                 ) : (
                     <FavoriteBorder />

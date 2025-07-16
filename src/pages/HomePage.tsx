@@ -19,7 +19,12 @@ import ProductModal from '../components/ProductModal';
 import SearchAndFilter from '../components/SearchAndFilter';
 import AISuggestions from '../components/AISuggestions';
 
-const HomePage: React.FC = () => {
+
+interface HomePageProps {
+    onNavigate?: (page: string) => void;
+}
+
+const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -124,6 +129,7 @@ const HomePage: React.FC = () => {
 
     return (
         <Container maxWidth="xl" sx={{ py: 3 }}>
+
             {/* Search and Filter */}
             <SearchAndFilter
                 filters={filters}

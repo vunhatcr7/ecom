@@ -5,7 +5,14 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import FavoritesPage from './pages/FavoritesPage';
 import HistoryPage from './pages/HistoryPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import BackgroundPattern from './components/BackgroundPattern';
 import { AppProvider } from './utils/AppContext';
+import { AuthProvider, useAuth } from './utils/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -54,8 +61,9 @@ const theme = createTheme({
   },
 });
 
-function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState('home');
+  const { isAuthenticated } = useAuth();
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
@@ -64,30 +72,63 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <HomePage />;
+        return <HomePage onNavigate={handleNavigate} />;
+      case 'login':
+        return <LoginPage onNavigate={handleNavigate} />;
+      case 'register':
+        return <RegisterPage onNavigate={handleNavigate} />;
       case 'favorites':
-        return <FavoritesPage onNavigate={handleNavigate} />;
+        return (
+          <ProtectedRoute isAuthenticated={isAuthenticated} onNavigate={handleNavigate}>
+            <FavoritesPage onNavigate={handleNavigate} />
+          </ProtectedRoute>
+        );
       case 'history':
-        return <HistoryPage onNavigate={handleNavigate} />;
+        return (
+          <ProtectedRoute isAuthenticated={isAuthenticated} onNavigate={handleNavigate}>
+            <HistoryPage onNavigate={handleNavigate} />
+          </ProtectedRoute>
+        );
       default:
-        return <HomePage />;
+        return <HomePage onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AppProvider>
-        <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <>
+      {/* Only show background for login/register pages */}
+      {(currentPage === 'login' || currentPage === 'register') && <BackgroundPattern />}
+      <ToastContainer position="top-right" autoClose={2000} />
+      <Box sx={{
+        minHeight: '100vh',
+        position: 'relative',
+        zIndex: 1,
+        backgroundColor: (currentPage === 'login' || currentPage === 'register') ? 'transparent' : '#f5f5f5'
+      }}>
+        {/* Show Header for all pages except login/register */}
+        {(currentPage !== 'login' && currentPage !== 'register') && (
           <Header
             currentPage={currentPage}
             onNavigate={handleNavigate}
           />
-          <Box sx={{ pt: 1 }}>
-            {renderPage()}
-          </Box>
+        )}
+        <Box sx={{ pt: (currentPage === 'login' || currentPage === 'register') ? 2 : 1 }}>
+          {renderPage()}
         </Box>
-      </AppProvider>
+      </Box>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

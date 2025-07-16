@@ -18,8 +18,10 @@ import {
     History,
     Person,
     Logout,
+    Login,
 } from '@mui/icons-material';
 import { useApp } from '../utils/AppContext';
+import { useAuth } from '../utils/AuthContext';
 
 interface HeaderProps {
     onNavigate: (page: string) => void;
@@ -27,7 +29,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
-    const { state } = useApp();
+    const { getCurrentUserFavorites } = useApp();
+    const { user, isAuthenticated, logout } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -40,6 +43,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
 
     const handleNavigation = (page: string) => {
         onNavigate(page);
+        handleMenuClose();
+    };
+
+    const handleLogout = () => {
+        logout();
+        onNavigate('home');
         handleMenuClose();
     };
 
@@ -116,62 +125,84 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
 
                 {/* User Menu */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconButton
-                        color="inherit"
-                        onClick={() => onNavigate('favorites')}
-                        sx={{ position: 'relative' }}
-                    >
-                        <Badge badgeContent={state.favorites.length} color="error">
-                            <Favorite />
-                        </Badge>
-                    </IconButton>
+                    {isAuthenticated && (
+                        <IconButton
+                            color="inherit"
+                            onClick={() => onNavigate('favorites')}
+                            sx={{ position: 'relative' }}
+                        >
+                            <Badge badgeContent={getCurrentUserFavorites().length} color="error">
+                                <Favorite />
+                            </Badge>
+                        </IconButton>
+                    )}
 
-                    <IconButton
-                        color="inherit"
-                        onClick={handleMenuOpen}
-                        sx={{ ml: 1 }}
-                    >
-                        <Avatar
+                    {isAuthenticated ? (
+                        <IconButton
+                            color="inherit"
+                            onClick={handleMenuOpen}
+                            sx={{ ml: 1 }}
+                        >
+                            <Avatar
+                                sx={{
+                                    width: 32,
+                                    height: 32,
+                                    backgroundColor: 'rgba(255,255,255,0.2)',
+                                }}
+                            >
+                                {user?.name?.charAt(0) || <Person />}
+                            </Avatar>
+                        </IconButton>
+                    ) : (
+                        <Button
+                            color="inherit"
+                            startIcon={<Login />}
+                            onClick={() => onNavigate('login')}
                             sx={{
-                                width: 32,
-                                height: 32,
-                                backgroundColor: 'rgba(255,255,255,0.2)',
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255,255,255,0.2)',
+                                },
                             }}
                         >
-                            <Person />
-                        </Avatar>
-                    </IconButton>
+                            Đăng nhập
+                        </Button>
+                    )}
 
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                        PaperProps={{
-                            sx: {
-                                mt: 1,
-                                minWidth: 200,
-                                borderRadius: 2,
-                            },
-                        }}
-                    >
-                        <MenuItem onClick={() => handleNavigation('profile')}>
-                            <Person sx={{ mr: 2 }} />
-                            Hồ sơ
-                        </MenuItem>
-                        <MenuItem onClick={() => handleNavigation('favorites')}>
-                            <Favorite sx={{ mr: 2 }} />
-                            Yêu thích ({state.favorites.length})
-                        </MenuItem>
-                        <MenuItem onClick={() => handleNavigation('history')}>
-                            <History sx={{ mr: 2 }} />
-                            Lịch sử xem
-                        </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleMenuClose}>
-                            <Logout sx={{ mr: 2 }} />
-                            Đăng xuất
-                        </MenuItem>
-                    </Menu>
+                    {isAuthenticated && (
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleMenuClose}
+                            PaperProps={{
+                                sx: {
+                                    mt: 1,
+                                    minWidth: 200,
+                                    borderRadius: 2,
+                                },
+                            }}
+                        >
+                            <MenuItem onClick={() => handleNavigation('profile')}>
+                                <Person sx={{ mr: 2 }} />
+                                Hồ sơ
+                            </MenuItem>
+                            <MenuItem onClick={() => handleNavigation('favorites')}>
+                                <Favorite sx={{ mr: 2 }} />
+                                Yêu thích ({getCurrentUserFavorites().length})
+                            </MenuItem>
+                            <MenuItem onClick={() => handleNavigation('history')}>
+                                <History sx={{ mr: 2 }} />
+                                Lịch sử xem
+                            </MenuItem>
+                            <Divider />
+                            <MenuItem onClick={handleLogout}>
+                                <Logout sx={{ mr: 2 }} />
+                                Đăng xuất
+                            </MenuItem>
+                        </Menu>
+                    )}
                 </Box>
             </Toolbar>
         </AppBar>

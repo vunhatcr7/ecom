@@ -18,6 +18,10 @@
 - **Responsive Design**: Hoạt động tốt trên mọi thiết bị
 - **Error Handling**: Xử lý lỗi khi API fail
 - **Modern UI/UX**: Thiết kế hiện đại với Material-UI
+- **Trang Giỏ hàng mới**: Giao diện tối giản, hiện đại, chỉ gồm danh sách sản phẩm và tổng giá tiền.
+- **Trang Thanh toán mới**: Giao diện tối ưu, chỉ gồm sản phẩm, thành tiền, chọn phương thức thanh toán (Thẻ, Momo, VNPay).
+- **Đồng bộ màu chủ đạo**: Sử dụng màu primary (#667eea) và secondary (#764ba2) cho toàn bộ giao diện.
+- **Tối ưu UX**: Giao diện gọn gàng, dễ thao tác, responsive tốt trên mọi thiết bị.
 
 ### 🎯 Điểm Cộng Đã Tích Hợp
 - ✅ Lịch sử xem (sản phẩm người dùng đã click)
@@ -134,6 +138,18 @@ src/
 - Tìm kiếm và lọc nâng cao
 - Gợi ý AI thông minh
 - Loading states và error handling
+
+### 5. Giỏ Hàng
+- Hiển thị danh sách sản phẩm trong giỏ
+- Xóa từng sản phẩm hoặc xóa tất cả
+- Hiển thị tổng giá tiền
+- Chuyển sang trang thanh toán
+
+### 6. Thanh Toán
+- Hiển thị lại sản phẩm trong giỏ
+- Hiển thị thành tiền
+- Chọn phương thức thanh toán (Thẻ, Momo, VNPay)
+- Xác nhận thanh toán
 
 ### 2. Yêu Thích
 - Quản lý danh sách yêu thích
