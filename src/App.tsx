@@ -5,6 +5,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import FavoritesPage from './pages/FavoritesPage';
 import HistoryPage from './pages/HistoryPage';
+import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -13,6 +14,9 @@ import { AppProvider } from './utils/AppContext';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { CartProvider } from './utils/CartContext';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -77,6 +81,12 @@ function AppContent() {
         return <LoginPage onNavigate={handleNavigate} />;
       case 'register':
         return <RegisterPage onNavigate={handleNavigate} />;
+      case 'profile':
+        return (
+          <ProtectedRoute isAuthenticated={isAuthenticated} onNavigate={handleNavigate}>
+            <ProfilePage onNavigate={handleNavigate} />
+          </ProtectedRoute>
+        );
       case 'favorites':
         return (
           <ProtectedRoute isAuthenticated={isAuthenticated} onNavigate={handleNavigate}>
@@ -89,6 +99,10 @@ function AppContent() {
             <HistoryPage onNavigate={handleNavigate} />
           </ProtectedRoute>
         );
+      case 'cart':
+        return <CartPage onNavigate={handleNavigate} />;
+      case 'checkout':
+        return <CheckoutPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }
@@ -126,7 +140,9 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <AppProvider>
-          <AppContent />
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
         </AppProvider>
       </AuthProvider>
     </ThemeProvider>

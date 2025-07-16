@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'react-toastify';
-
-interface User {
-    id: string;
-    name: string;
-    email: string;
-}
+import { User } from '../types';
 
 interface AuthContextType {
     user: User | null;
@@ -67,6 +62,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 id: `user_${Date.now()}`,
                 name: userData.name,
                 email: userData.email,
+                favorites: [],
+                viewHistory: [],
+                avatar: '',
             };
 
             // Lưu danh sách tài khoản đã đăng ký (mock data)

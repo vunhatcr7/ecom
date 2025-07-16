@@ -57,6 +57,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                     id: 'user1',
                     name: 'Nguyễn Văn Test',
                     email: formData.email,
+                    favorites: [],
+                    viewHistory: [],
+                    avatar: '',
                 });
                 onNavigate('home');
                 return;
@@ -73,6 +76,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                     id: user.id,
                     name: user.name,
                     email: user.email,
+                    favorites: user.favorites || [],
+                    viewHistory: user.viewHistory || [],
+                    avatar: user.avatar || '',
                 });
                 onNavigate('home');
             } else {

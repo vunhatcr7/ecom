@@ -26,6 +26,8 @@ import {
 } from '@mui/icons-material';
 import { Product } from '../types';
 import { useApp } from '../utils/AppContext';
+import { useCart } from '../utils/CartContext';
+import { toast } from 'react-toastify';
 import {
     formatPrice,
     hasDiscount,
@@ -42,6 +44,7 @@ interface ProductModalProps {
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, open, onClose }) => {
     const { isFavorite, addFavorite, removeFavorite } = useApp();
+    const { addToCart, cartItems } = useCart();
 
     if (!product) return null;
 
@@ -50,6 +53,17 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, open, onClose }) =
             removeFavorite(product.id);
         } else {
             addFavorite(product.id);
+        }
+    };
+
+    const handleAddToCart = () => {
+        if (product) {
+            if (cartItems.find(item => item.id === product.id)) {
+                toast.warning('Khóa học này đã có trong giỏ hàng!');
+            } else {
+                addToCart(product);
+                toast.success('Đã thêm vào giỏ hàng!');
+            }
         }
     };
 
@@ -250,6 +264,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, open, onClose }) =
                                         fontWeight: 'bold',
                                         py: 1.5,
                                     }}
+                                    onClick={handleAddToCart}
                                 >
                                     Đăng ký khóa học
                                 </Button>

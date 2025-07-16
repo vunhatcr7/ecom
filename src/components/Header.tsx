@@ -19,9 +19,12 @@ import {
     Person,
     Logout,
     Login,
+    ShoppingCart,
 } from '@mui/icons-material';
 import { useApp } from '../utils/AppContext';
 import { useAuth } from '../utils/AuthContext';
+import { useCart } from '../utils/CartContext';
+import { User } from '../types';
 
 interface HeaderProps {
     onNavigate: (page: string) => void;
@@ -31,6 +34,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
     const { getCurrentUserFavorites } = useApp();
     const { user, isAuthenticated, logout } = useAuth();
+    const { cartItems } = useCart();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -128,6 +132,18 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                     {isAuthenticated && (
                         <IconButton
                             color="inherit"
+                            onClick={() => onNavigate('cart')}
+                            sx={{ position: 'relative' }}
+                        >
+                            <Badge badgeContent={cartItems.length} color="primary">
+                                <ShoppingCart />
+                            </Badge>
+                        </IconButton>
+                    )}
+
+                    {isAuthenticated && (
+                        <IconButton
+                            color="inherit"
                             onClick={() => onNavigate('favorites')}
                             sx={{ position: 'relative' }}
                         >
@@ -144,13 +160,10 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                             sx={{ ml: 1 }}
                         >
                             <Avatar
-                                sx={{
-                                    width: 32,
-                                    height: 32,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                }}
+                                src={user?.avatar}
+                                sx={{ width: 32, height: 32, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
                             >
-                                {user?.name?.charAt(0) || <Person />}
+                                {(!user?.avatar && user?.name?.charAt(0)) || <Person />}
                             </Avatar>
                         </IconButton>
                     ) : (
@@ -186,7 +199,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                         >
                             <MenuItem onClick={() => handleNavigation('profile')}>
                                 <Person sx={{ mr: 2 }} />
-                                Hồ sơ
+                                Hồ sơ cá nhân
                             </MenuItem>
                             <MenuItem onClick={() => handleNavigation('favorites')}>
                                 <Favorite sx={{ mr: 2 }} />

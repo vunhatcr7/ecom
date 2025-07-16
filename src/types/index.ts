@@ -22,6 +22,7 @@ export interface User {
     email: string;
     favorites: string[]; // Product IDs
     viewHistory: string[]; // Product IDs
+    avatar?: string;
 }
 
 export interface FilterOptions {

@@ -15,9 +15,12 @@ import {
     History,
     Person,
     Login,
+    ShoppingCart,
 } from '@mui/icons-material';
 import { useAuth } from '../utils/AuthContext';
 import { useApp } from '../utils/AppContext';
+import { useCart } from '../utils/CartContext';
+import { User } from '../types';
 
 interface NavigationBarProps {
     onNavigate: (page: string) => void;
@@ -27,6 +30,7 @@ interface NavigationBarProps {
 const NavigationBar: React.FC<NavigationBarProps> = ({ onNavigate, currentPage }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const { getCurrentUserFavorites } = useApp();
+    const { cartItems } = useCart();
 
     return (
         <AppBar
@@ -77,6 +81,21 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ onNavigate, currentPage }
                         <>
                             <Button
                                 color="inherit"
+                                onClick={() => onNavigate('profile')}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: currentPage === 'profile' ? 'bold' : 'normal',
+                                    backgroundColor: currentPage === 'profile' ? 'rgba(255,255,255,0.2)' : 'transparent',
+                                    color: 'white',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255,255,255,0.1)',
+                                    },
+                                }}
+                            >
+                                Hồ sơ
+                            </Button>
+                            <Button
+                                color="inherit"
                                 onClick={() => onNavigate('favorites')}
                                 sx={{
                                     textTransform: 'none',
@@ -114,6 +133,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ onNavigate, currentPage }
                     {isAuthenticated && (
                         <IconButton
                             color="inherit"
+                            onClick={() => onNavigate('cart')}
+                            sx={{ position: 'relative' }}
+                        >
+                            <Badge badgeContent={cartItems.length} color="primary">
+                                <ShoppingCart sx={{ color: 'white' }} />
+                            </Badge>
+                        </IconButton>
+                    )}
+                    {isAuthenticated && (
+                        <IconButton
+                            color="inherit"
                             onClick={() => onNavigate('favorites')}
                             sx={{ position: 'relative' }}
                         >
@@ -130,14 +160,10 @@ const NavigationBar: React.FC<NavigationBarProps> = ({ onNavigate, currentPage }
                             sx={{ ml: 1 }}
                         >
                             <Avatar
-                                sx={{
-                                    width: 32,
-                                    height: 32,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    color: 'white',
-                                }}
+                                src={user?.avatar}
+                                sx={{ width: 32, height: 32, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
                             >
-                                {user?.name?.charAt(0) || <Person />}
+                                {(!user?.avatar && user?.name?.charAt(0)) || <Person />}
                             </Avatar>
                         </IconButton>
                     ) : (
